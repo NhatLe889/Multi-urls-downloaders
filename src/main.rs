@@ -23,6 +23,10 @@ use core::task;
 use std::fs::read_to_string;
 use std::process::exit;
 use futures::future;
+use reqwest::{self, Response, header, Client};
+use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 
 use std::{env, fs, process};
 
@@ -40,19 +44,48 @@ fn main() {
 }
 
 #[tokio::main]
-async fn SpawnRunTime(contents: &String) {
+async fn SpawnRunTime(contents: &String) -> Result<(), Box< dyn std::error::Error>> {
     println!("Tokio Starting...");
 
-    let contents_vector: Vec<String> = contents.lines().map(String::from).collect();
+    let client = reqwest::Client::new();
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64)"),
+    );
+    // "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
 
+    let contents_vector: Vec<String> = contents.lines().map(String::from).collect();
     let mut handles = Vec::new();
+
     for line in contents_vector.into_iter() {
+        let client = client.clone();
+        let headers = headers.clone();
+        let url = line.clone();
+
         let handle = tokio::spawn(async move {
-            println!("URL: {}", line);
-            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+            match client.get(&url).headers(headers).send().await {
+                Ok(response) => {
+                    print!("URL: {}", url);
+                    println!("Status: {}", response.status());
+                    println!("Headers:\n{:#?}", response.headers());
+
+                    let filename = line.split('/').last().unwrap_or("downloaded_file").to_string();
+                    // println!("{}", filename);
+                    let mut file = File::create(&filename).await.unwrap();
+                    let bytes = response.bytes().await.unwrap();
+                    file.write_all(&bytes).await.unwrap();
+
+                    println!("Download file: {}", filename);
+
+                }
+                Err(e) => eprintln!("Request failed for {}: {}", url, e),
+            }
+
         });
         handles.push(handle);
     }
 
     let _ = future::join_all(handles).await;
+    Ok(())
+
 }
