@@ -27,6 +27,7 @@ use reqwest::{self, Response, header, Client};
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
+use dirs;
 
 use std::{env, fs, process};
 
@@ -65,17 +66,21 @@ async fn SpawnRunTime(contents: &String) -> Result<(), Box< dyn std::error::Erro
         let handle = tokio::spawn(async move {
             match client.get(&url).headers(headers).send().await {
                 Ok(response) => {
-                    print!("URL: {}", url);
-                    println!("Status: {}", response.status());
-                    println!("Headers:\n{:#?}", response.headers());
+                    // print!("URL: {}", url);
+                    // println!("Status: {}", response.status());
+                    // println!("Headers:\n{:#?}", response.headers());
+
+                    let specific_dir = dirs::download_dir().unwrap_or(std::env::current_dir().unwrap());
 
                     let filename = line.split('/').last().unwrap_or("downloaded_file").to_string();
-                    // println!("{}", filename);
-                    let mut file = File::create(&filename).await.unwrap();
+                    println!("Download file: {}", filename);
+
+                    let filepath = specific_dir.join(filename);
+                    // println!("{}", filepath.display());
+                    let mut file = File::create(&filepath).await.unwrap();
                     let bytes = response.bytes().await.unwrap();
                     file.write_all(&bytes).await.unwrap();
 
-                    println!("Download file: {}", filename);
 
                 }
                 Err(e) => eprintln!("Request failed for {}: {}", url, e),
