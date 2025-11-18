@@ -84,13 +84,13 @@ async fn process_url(client: reqwest::Client, headers: HeaderMap, url: &str, pro
     let mut file = File::create(&filepath).await?;
 
     let mut stream = response.bytes_stream();
-    // let mut downloaded: u64 = 0;
+    let mut downloaded: u64 = 0;
 
     while let Some(item) = stream.next().await {
         let chunk = item?;
         file.write_all(&chunk).await?;
-        // downloaded += chunk.len() as u64;
-        progress_bar.set_position(chunk.len() as u64);
+        downloaded += chunk.len() as u64;
+        progress_bar.set_position(downloaded);
     }
 
     progress_bar.finish_with_message(format!("Downloaded to {}", filepath.display()));
