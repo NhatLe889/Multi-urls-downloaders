@@ -1,28 +1,3 @@
-
-// #[tokio::main]
-// async fn main() {
-//     println!("Hello from Tokio!");
-    
-//     tokio::spawn(async {
-//         println!("Task 1 started");
-//         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-//         println!("Task 1 finisher");
-//     });
-
-//     tokio::spawn(async {
-//         println!("Task 2 started");
-//         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-//         println!("Task 2 finisher");
-//     });
-
-//     tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
-//     println!("Main function finished");
-// }
-
-use core::task;
-use std::fmt::format;
-use std::fs::read_to_string;
-use std::process::exit;
 use futures::future;
 use reqwest::{self, Response, header, Client};
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
